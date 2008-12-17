@@ -1,1 +1,0 @@
-POST, right there with data: <?= $data?>!

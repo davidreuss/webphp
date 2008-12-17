@@ -1,14 +1,19 @@
 <?php
 class Root extends Resource {
-    
+
     public $map = array('welcome' => 'Resource_Welcome');
 
-    public function GET() {
-        return new View('root', array('welcomeURL' => $this->url('/welcome/')));
+    public function greet($from) {
+        $view = new View('root', array('from' => $from));
+        return $view->render();
     }
-    
+
+    public function GET() {
+        return $this->greet('GET');
+    }
+
     public function POST() {
-        return new View('post', array('data' => $this->POST['data']));
+        return $this->greet('POST');
     }
 }
 ?>

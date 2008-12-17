@@ -4,16 +4,37 @@ class WebPHP {
     public $baseURL;
     public $base;
 
+    /**
+     * Constructor
+     *
+     * Initializes base and baseURL, from $_SERVER
+     */
     public function __construct() {
         $this->base = dirname($_SERVER['SCRIPT_NAME']);
         $this->baseURL = $this->getBaseURL($_SERVER['REQUEST_URI']);
     }
 
+    /**
+     * WebPHP's autoloader
+     *
+     * It makes including classes automatic if you follow
+     * the naming convention
+     *
+     * Ex. My_Awesome_Class -> lib/my/awesome/class.php
+     *
+     * @param $classname
+     */
     public static function autoload($classname) {
         $filename = str_replace('_', '/', strtolower($classname)).'.php';
-        require_once($filename);
+        include $filename;
     }
 
+    /**
+     * Get baseURL from a given request URI
+     *
+     * @param string $requestURI
+     * @return string
+     */
     private function getBaseURL($requestURI) {
         $tmp = explode('?', $requestURI);
         if (count($tmp) == 2) {
@@ -25,40 +46,17 @@ class WebPHP {
     }
 
     /**
-     * I'm not very happy about the implementation of the following
-     * but it seems to work nicely so this acts as a note to look at this
-     * once in the future (yeah right)
+     * Dispatch
+     *
+     * Run the app
+     *
+     * @param Resoruce $root
+     * @return string the output of the request
      */
-    public function findDelegate($uri, $root) {
-        $handler = $root;
-        $parts = array();
-        $uriParts = explode('/', $uri);
-        foreach ($uriParts as $key => $part) {
-            if (!$part) continue;
-            $subspace = array_slice($uriParts, $key, count($uriParts));
-            $handler->setSubspace(join('/', $subspace));
-            if (isset($handler->map[$part])) {
-                $parts[] = $part;
-                $handler = new $handler->map[$part](
-                    join('/', array_merge(array($this->base), $parts)), $subspace);
-            } else {
-                return $handler->forward($part);
-            }
-        }
-        return $handler;
-    }
-
-    public function dispatch(Resource $root/*, View $decorator*/) {
-        $delegate = $this->findDelegate($this->baseURL, $root);
-        $view = $delegate->sendResponse();
-        if ($view) {
-            // Decorate with default page view
-            //$decorator->set('content', $view->fetch());
-            //$decorator->render();
-            $view->render();
-        } else {
-            // No view received - holy fuck, abort!
-        }
+    public function dispatch() {
+        $root = new Root();
+        $root->setBaseURL($this->base, $this->baseURL);
+        return $root->sendResponse();
     }
 }
 ?>

@@ -1,3 +1,1 @@
-Lovely design, ey? 
-
-<a href="<?= $welcomeURL ?>">Go to welcome</a>
+Hello from: <?= $from ?>

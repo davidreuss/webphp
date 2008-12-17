@@ -1,41 +1,131 @@
 <?php
 class Resource {
 
-    public $POST;
-    public $GET;
-
-    public $base;
-    public $subspace;
-    
+    /**
+     * The map for the resource
+     *
+     * Is used for mapping URL's to certain resources
+     *
+     * E.g
+     * $map = array('hello' => 'Resource_Hello')
+     *
+     * .. maps 'http://<app root>/hello' to the Resource_Hello class.
+     */
     public $map = array();
-    
-    public $urlState = array();
-    
-    public function __construct($base = '') {
-        $this->base = $base;
+
+    /**
+     * The current url state of the Resource
+     *
+     * @param array $urlState
+     */
+    private $urlState = array();
+
+    /**
+     * The baseURL for the app with whatever "prefix"
+     * there might be
+     */
+    private static $baseURL = '';
+
+    /**
+     * Resource URL split on '/'
+     */
+    private $baseURLParts = array();
+
+    /**
+     * Constructor
+     */
+    public function __construct(Resource $parent = null) {
+        if ($parent) {
+            $this->initializeFromParent($parent);
+        }
     }
-    
+
+    /**
+     * Sets the URL parts based on the ones from the parent
+     *
+     * @param Resource $parent
+     * @access private
+     * @return void
+     */
+    private function initializeFromParent(Resource $parent) {
+        $parentParts = $parent->getBaseURLParts();
+        array_shift($parentParts);
+        $this->baseURLParts = $parentParts;
+    }
+
+    /**
+     * Send the response
+     *
+     * Inspect request first, and determine if we
+     * should forward
+     *
+     * @return string response
+     */
     public function sendResponse() {
-        $this->handleRequest();
-        // FIXME: This could be built to handle PUT/DELETE
-        // from looking at Http-Method-Equivalent for alternative request types
+        $next = $this->next();
+        if ($next) {
+            if (isset($this->map[$next])) {
+                $resource = new $this->map[$next]($this);
+                return $resource->sendResponse();
+            }
+            return $this->forward($next);
+        }
+        return $this->execute();
+    }
+
+    /**
+     * Get the response from the current resource
+     *
+     * @todo Could be built to handle alternative request types
+     *       from looking at Http-Method-Equivalent
+     *
+     * @access private
+     * @return string the response
+     */
+    private function execute() {
         $method = $_SERVER['REQUEST_METHOD'];
         switch ($method) {
             case 'POST':
-                $this->POST = $_POST;
                 return $this->POST();
             default:
-                $this->GET = $_GET;
                 return $this->GET();
             break;
         }
     }
 
+    /**
+     * Find next if set
+     *
+     * @return string next url part
+     */
+    public function next() {
+        if (isset($this->baseURLParts[0])
+            && !empty($this->baseURLParts[0])
+            && isset($this->baseURLParts[1])
+            && !empty($this->baseURLParts[1])
+            ) {
+            return $this->baseURLParts[0];
+        }
+    }
+
+    /**
+     * Build URL
+     *
+     * It will look at the current resource url state and apply
+     * them as well.
+     *
+     * The args given to the method takes precendence, so it's easy
+     * to override arguments set in the url state
+     *
+     * @param string $href
+     * @param array $args, arguments to the url
+     * @return string the URL
+     */
     public function url($href = "", $args = array()) {
-        $protocol = 'http'; // FIXME: Does not handle https!
+        $protocol = (isset($_SERVER['HTTPS'])) ? 'https' : 'http';
         $server = (isset($_SERVER['HTTP_HOST'])) ? $_SERVER['HTTP_HOST'] : $_SERVER['SERVER_NAME'];
         $serverport = $_SERVER['SERVER_PORT'];
-        $base = (isset($href[0]) && $href[0] == '/') ? dirname($_SERVER['SCRIPT_NAME']) : $this->base . '/';
+        $base = (isset($href[0]) && $href[0] == '/') ? dirname($_SERVER['SCRIPT_NAME']) : self::$baseURL . '/';
         $port = (isset($serverport) && $serverport != 80) ? ':' . $serverport : '';
         $url = $protocol . '://' . $server . $port . $base;
         $args = array_merge($this->getURLState(), $args);
@@ -44,29 +134,92 @@ class Resource {
         }
         return $url . $href;
     }
-    
-    public function forward($name) {
-        // throw new Exception('No forward defined');
+
+    /**
+     * Get name of resource
+     *
+     * @return string the name
+     */
+    public function getName() {
+        if (isset($this->baseURLParts[0])) {
+            return $this->baseURLParts[0];
+        }
     }
-    
-    public function getSubspace() {
-        return $this->subspace;
+
+    /**
+     * Forward request to controller if any
+     *
+     * @param string $name
+     * @access protected
+     */
+    protected function forward($name) {
+        $handler = $this;
+        if ($name) {
+            if (isset($this->map[$name])) {
+                $next = $this->map[$name];
+                $handler = new $next($this);
+            }
+        }
+        return $handler->execute();
     }
-    
-    public function setSubspace($subspace) {
-        $this->subspace = $subspace;
-    }
-    
+
+    /**
+     * Get the current URL state
+     *
+     * @return array
+     */
     public function getURLState() {
         return $this->urlState;
     }
-    
+
+    /**
+     * Set the URL state for the resource
+     */
     public function setURLState($state) {
         $this->urlState = $state;
     }
 
-    public function handleRequest() {}
+    /**
+     * Set the request URI
+     */
+    public function setBaseURL($base, $baseURL) {
+        self::$baseURL = $base . '/' . $baseURL;
+        $this->setBaseURLParts($baseURL);
+    }
+
+    /**
+     * Set base URL parts
+     *
+     * This is just to avoid that every Resource
+     * "parses" the URL themself
+     */
+    private function setBaseURLParts($url) {
+        $this->baseURLParts = explode('/', $url);
+    }
+
+    /**
+     * Get's the base URL parts
+     */
+    public function getBaseURLParts() {
+        return $this->baseURLParts;
+    }
+
+    /**
+     * GET stub
+     *
+     * Should be overridden by subclasses
+     *
+     * @return string response from request
+     */
     public function GET() {}
+
+    /**
+     * POST stub
+     *
+     * Should be overridden by subclasses
+     *
+     * @return string response from request
+     */
     public function POST() {}
 }
 ?>
