@@ -36,21 +36,9 @@ class Resource {
      */
     public function __construct(Resource $parent = null) {
         if ($parent) {
-            $this->initializeFromParent($parent);
+            // Inherit url parts from parent
+            $this->baseURLParts = $parent->getBaseURLParts();
         }
-    }
-
-    /**
-     * Sets the URL parts based on the ones from the parent
-     *
-     * @param Resource $parent
-     * @access private
-     * @return void
-     */
-    private function initializeFromParent(Resource $parent) {
-        $parentParts = $parent->getBaseURLParts();
-        array_shift($parentParts);
-        $this->baseURLParts = $parentParts;
     }
 
     /**
@@ -99,13 +87,7 @@ class Resource {
      * @return string next url part
      */
     public function next() {
-        if (isset($this->baseURLParts[0])
-            && !empty($this->baseURLParts[0])
-            && isset($this->baseURLParts[1])
-            && !empty($this->baseURLParts[1])
-            ) {
-            return $this->baseURLParts[0];
-        }
+        return array_shift($this->baseURLParts);
     }
 
     /**
