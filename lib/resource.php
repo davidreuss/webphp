@@ -39,7 +39,7 @@ class Resource {
             // Pass on from parent
             $this->baseURLParts = $parent->getBaseURLParts();
         } else {
-            $this->initializeRequestAndBaseURL();
+            $this->initializeRequestURIAndBaseURL();
         }
     }
 
@@ -169,7 +169,7 @@ class Resource {
      * @access private
      * @return void
      */
-    private function initializeRequestAndBaseURL() {
+    private function initializeRequestURIAndBaseURL() {
         $base = dirname($_SERVER['SCRIPT_NAME']);
         $requestURI = $_SERVER['REQUEST_URI'];
         $tmp = explode('?', $requestURI);
