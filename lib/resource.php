@@ -52,6 +52,7 @@ class Resource {
      * @return string response
      */
     public function sendResponse() {
+        $this->handle();
         $next = $this->next();
         if ($next) {
             if (isset($this->map[$next])) {
@@ -204,5 +205,19 @@ class Resource {
      * @return string response from request
      */
     public function POST() {}
+
+    /**
+     * Handle stub
+     *
+     * Should be overridden by subclasses
+     *
+     * Custom "hook", you should implement in your resources
+     * for setting up $map, or whatever state needed before
+     * determining if we should forward, or how to handle the
+     * request
+     *
+     * @return void
+     */
+    public function handle() {}
 }
 ?>
