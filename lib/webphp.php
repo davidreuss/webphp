@@ -1,19 +1,6 @@
 <?php
 class WebPHP {
 
-    public $baseURL;
-    public $base;
-
-    /**
-     * Constructor
-     *
-     * Initializes base and baseURL, from $_SERVER
-     */
-    public function __construct() {
-        $this->base = dirname($_SERVER['SCRIPT_NAME']);
-        $this->baseURL = $this->getBaseURL($_SERVER['REQUEST_URI']);
-    }
-
     /**
      * WebPHP's autoloader
      *
@@ -30,22 +17,6 @@ class WebPHP {
     }
 
     /**
-     * Get baseURL from a given request URI
-     *
-     * @param string $requestURI
-     * @return string
-     */
-    private function getBaseURL($requestURI) {
-        $tmp = explode('?', $requestURI);
-        if (count($tmp) == 2) {
-            list ($requestURI, $queryString) = $tmp;
-        }
-        $baseURL = str_replace($this->base, '', $requestURI);
-        $baseURL = ltrim($baseURL, '/');
-        return $baseURL;
-    }
-
-    /**
      * Dispatch
      *
      * Run the app
@@ -55,7 +26,6 @@ class WebPHP {
      */
     public function dispatch() {
         $root = new Root();
-        $root->setBaseURL($this->base, $this->baseURL);
         return $root->sendResponse();
     }
 }

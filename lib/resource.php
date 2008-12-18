@@ -21,10 +21,10 @@ class Resource {
     private $urlState = array();
 
     /**
-     * The baseURL for the app with whatever "prefix"
+     * The request uri for the app with whatever "prefix"
      * there might be
      */
-    private static $baseURL = '';
+    private static $requestURI = '';
 
     /**
      * Resource URL split on '/'
@@ -36,8 +36,10 @@ class Resource {
      */
     public function __construct(Resource $parent = null) {
         if ($parent) {
-            // Inherit url parts from parent
+            // Pass on from parent
             $this->baseURLParts = $parent->getBaseURLParts();
+        } else {
+            $this->initializeRequestAndBaseURL();
         }
     }
 
@@ -162,21 +164,21 @@ class Resource {
     }
 
     /**
-     * Set the request URI
-     */
-    public function setBaseURL($base, $baseURL) {
-        self::$baseURL = $base . '/' . $baseURL;
-        $this->setBaseURLParts($baseURL);
-    }
-
-    /**
-     * Set base URL parts
+     * Inspect request uri and setup accordingly
      *
-     * This is just to avoid that every Resource
-     * "parses" the URL themself
+     * @access private
+     * @return void
      */
-    private function setBaseURLParts($url) {
-        $this->baseURLParts = explode('/', $url);
+    private function initializeRequestAndBaseURL() {
+        $base = dirname($_SERVER['SCRIPT_NAME']);
+        $requestURI = $_SERVER['REQUEST_URI'];
+        $tmp = explode('?', $requestURI);
+        if (count($tmp) > 0) {
+            list ($requestURI, $queryString) = $tmp;
+        }
+        $baseURL = ltrim(str_replace($base, '', $requestURI), '/');
+        $this->baseURLParts = explode('/', $baseURL);
+        self::$requestURI = $base . '/' . $baseURL;
     }
 
     /**
