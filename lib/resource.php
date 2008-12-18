@@ -109,7 +109,7 @@ class Resource {
         $protocol = (isset($_SERVER['HTTPS'])) ? 'https' : 'http';
         $server = (isset($_SERVER['HTTP_HOST'])) ? $_SERVER['HTTP_HOST'] : $_SERVER['SERVER_NAME'];
         $serverport = $_SERVER['SERVER_PORT'];
-        $base = (isset($href[0]) && $href[0] == '/') ? dirname($_SERVER['SCRIPT_NAME']) : self::$baseURL . '/';
+        $base = (isset($href[0]) && $href[0] == '/') ? dirname($_SERVER['SCRIPT_NAME']) : self::$requestURI . '/';
         $port = (isset($serverport) && $serverport != 80) ? ':' . $serverport : '';
         $url = $protocol . '://' . $server . $port . $base;
         $args = array_merge($this->getURLState(), $args);
@@ -140,8 +140,7 @@ class Resource {
         $handler = $this;
         if ($name) {
             if (isset($this->map[$name])) {
-                $next = $this->map[$name];
-                $handler = new $next($this);
+                $handler = new $this->map[$name]($this);
             }
         }
         return $handler->execute();
