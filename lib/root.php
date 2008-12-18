@@ -4,7 +4,7 @@ class Root extends Resource {
     public $map = array('welcome' => 'Resource_Welcome');
 
     public function greet($from) {
-        $view = new View('root', array('from' => $from));
+        $view = new View('root', array('from' => $from, 'welcomeURL' => $this->url('/welcome')));
         return $view->render();
     }
 
