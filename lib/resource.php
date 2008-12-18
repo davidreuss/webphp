@@ -86,7 +86,7 @@ class Resource {
      *
      * @return string next url part
      */
-    public function next() {
+    private function next() {
         return array_shift($this->baseURLParts);
     }
 
