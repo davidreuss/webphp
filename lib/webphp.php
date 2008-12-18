@@ -9,7 +9,7 @@ class WebPHP {
      *
      * Ex. My_Awesome_Class -> lib/my/awesome/class.php
      *
-     * @param $classname
+     * @param string $classname
      */
     public static function autoload($classname) {
         $filename = str_replace('_', '/', strtolower($classname)).'.php';
@@ -21,7 +21,7 @@ class WebPHP {
      *
      * Run the app
      *
-     * @param Resoruce $root
+     * @param Resource $root
      * @return string the output of the request
      */
     public function dispatch() {
