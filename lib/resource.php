@@ -52,7 +52,6 @@ class Resource {
      * @return string response
      */
     public function sendResponse() {
-        $this->handle();
         $next = $this->next();
         if ($next) {
             if (isset($this->map[$next])) {
@@ -75,12 +74,8 @@ class Resource {
      */
     private function execute() {
         $method = $_SERVER['REQUEST_METHOD'];
-        switch ($method) {
-            case 'POST':
-                return $this->POST();
-            default:
-                return $this->GET();
-            break;
+        if (in_array($method, array('GET', 'POST'))) {
+            return $this->{$method}();
         }
     }
 
